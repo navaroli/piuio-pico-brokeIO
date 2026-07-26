@@ -122,7 +122,13 @@ static uint32_t ws2812_color[5] = {
 #define MUX4067_P1_CENTER 5
 #define MUX4067_P1_DOWNLEFT 4
 #define MUX4067_P1_DOWNRIGHT 3
+// MUX4067_P1_MENU_SELECT would be same as JAMMA_W
+// MUX4067_P1_MENU_L would be same as JAMMA_X
+// MUX4067_P1_MENU_R would be same as JAMMA_Y
 
+#define MUX4067_P2_SELECT 23
+#define MUX4067_P2_MENU_L 22
+#define MUX4067_P2_MENU_R 21
 #define MUX4067_P2_UPLEFT 20
 #define MUX4067_P2_UPRIGHT 19
 #define MUX4067_P2_CENTER 18
@@ -179,7 +185,13 @@ static uint32_t ws2812_color[5] = {
 #define MUX4067_P1_CENTER 21
 #define MUX4067_P1_DOWNLEFT 20
 #define MUX4067_P1_DOWNRIGHT 19
+// MUX4067_P1_MENU_SELECT would be same as JAMMA_W
+// MUX4067_P1_MENU_L would be same as JAMMA_X
+// MUX4067_P1_MENU_R would be same as JAMMA_Y
 
+#define MUX4067_P2_SELECT 7
+#define MUX4067_P2_MENU_L 6
+#define MUX4067_P2_MENU_R 5
 #define MUX4067_P2_UPLEFT 4
 #define MUX4067_P2_UPRIGHT 3
 #define MUX4067_P2_CENTER 2

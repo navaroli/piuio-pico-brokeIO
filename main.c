@@ -56,6 +56,10 @@ int input_mode_tmp = -1;
 bool config_mode = false;
 bool config_switched = false;
 
+// For ITG dedicabs; swap 1P and 2P lights in non-PIUIO modes.
+int swap_pad_lights = -1;
+int swap_pad_lights_tmp = -1;
+
 // set pad lights based on whether an arrow is pressed or not, bypassing the host
 // automatically enabled for all modes besides PIUIO and LXIO
 bool direct_lights = false;
@@ -217,6 +221,7 @@ void input_task() {
     jamma_z = GETBIT(merged, MUX4067_JAMMA_Z);
 
     if (config_mode) {
+        // Toggle input mode.
         if ((!input.p1_dl && last_input.p1_dl) || (!input.p2_dl && last_input.p2_dl)) {
             if (input_mode_tmp > 0)
                 input_mode_tmp--;
@@ -225,6 +230,11 @@ void input_task() {
                 input_mode_tmp++;
         } else if ((!input.test && last_input.test) || (!input.test && last_input.test)) {
             input_mode_tmp = (input_mode_tmp + 1) % INPUT_MODE_COUNT;
+        }
+
+        // Toggle swapping of 1P and 2P lights for ITG dedicabs.
+        if ((!input.p1_select && !input.p2_select) && (last_input.p1_select || last_input.p2_select)) {
+            swap_pad_lights_tmp = swap_pad_lights_tmp > 0 ? 0 : 1;
         }
     }
 
@@ -238,11 +248,12 @@ void input_task() {
     if (config_switched && !input.service && current_ts - last_service_ts > SETTINGS_THRESHOLD && input.test) {
         if (!config_mode) {
             input_mode_tmp = input_mode;
+            swap_pad_lights_tmp = swap_pad_lights;
             config_mode = true;
         } else {
             config_mode = false;
             // save changes for mode to flash memory and reset device!
-            write_input_mode(input_mode_tmp);
+            write_input_mode(input_mode_tmp, swap_pad_lights_tmp);
             // enable watchdog and enter infinite loop to reset
             watchdog_enable(1, 1);
             while(1);
@@ -320,17 +331,31 @@ void lights_task() {
     } else if (direct_lights) {  // technically it could be direct_lights && !merge_mux
         uint32_t in_buf = mux4067_merged(mux4067_vals_db);
 
-        SETORCLRBIT(buf, LATCH_P1L_UPLEFT, GETBIT(in_buf, MUX4067_P1_UPLEFT));
-        SETORCLRBIT(buf, LATCH_P1L_UPRIGHT, GETBIT(in_buf, MUX4067_P1_UPRIGHT));
-        SETORCLRBIT(buf, LATCH_P1L_CENTER, GETBIT(in_buf, MUX4067_P1_CENTER));
-        SETORCLRBIT(buf, LATCH_P1L_DOWNLEFT, GETBIT(in_buf, MUX4067_P1_DOWNLEFT));
-        SETORCLRBIT(buf, LATCH_P1L_DOWNRIGHT, GETBIT(in_buf, MUX4067_P1_DOWNRIGHT));
+        if (swap_pad_lights && input_mode != INPUT_MODE_PIUIO) {
+            SETORCLRBIT(buf, LATCH_P1L_UPLEFT, GETBIT(in_buf, MUX4067_P2_UPLEFT));
+            SETORCLRBIT(buf, LATCH_P1L_UPRIGHT, GETBIT(in_buf, MUX4067_P2_UPRIGHT));
+            SETORCLRBIT(buf, LATCH_P1L_CENTER, GETBIT(in_buf, MUX4067_P2_CENTER));
+            SETORCLRBIT(buf, LATCH_P1L_DOWNLEFT, GETBIT(in_buf, MUX4067_P2_DOWNLEFT));
+            SETORCLRBIT(buf, LATCH_P1L_DOWNRIGHT, GETBIT(in_buf, MUX4067_P2_DOWNRIGHT));
 
-        SETORCLRBIT(buf, LATCH_P2L_UPLEFT, GETBIT(in_buf, MUX4067_P2_UPLEFT));
-        SETORCLRBIT(buf, LATCH_P2L_UPRIGHT, GETBIT(in_buf, MUX4067_P2_UPRIGHT));
-        SETORCLRBIT(buf, LATCH_P2L_CENTER, GETBIT(in_buf, MUX4067_P2_CENTER));
-        SETORCLRBIT(buf, LATCH_P2L_DOWNLEFT, GETBIT(in_buf, MUX4067_P2_DOWNLEFT));
-        SETORCLRBIT(buf, LATCH_P2L_DOWNRIGHT, GETBIT(in_buf, MUX4067_P2_DOWNRIGHT));
+            SETORCLRBIT(buf, LATCH_P2L_UPLEFT, GETBIT(in_buf, MUX4067_P1_UPLEFT));
+            SETORCLRBIT(buf, LATCH_P2L_UPRIGHT, GETBIT(in_buf, MUX4067_P1_UPRIGHT));
+            SETORCLRBIT(buf, LATCH_P2L_CENTER, GETBIT(in_buf, MUX4067_P1_CENTER));
+            SETORCLRBIT(buf, LATCH_P2L_DOWNLEFT, GETBIT(in_buf, MUX4067_P1_DOWNLEFT));
+            SETORCLRBIT(buf, LATCH_P2L_DOWNRIGHT, GETBIT(in_buf, MUX4067_P1_DOWNRIGHT));
+        } else {
+            SETORCLRBIT(buf, LATCH_P1L_UPLEFT, GETBIT(in_buf, MUX4067_P1_UPLEFT));
+            SETORCLRBIT(buf, LATCH_P1L_UPRIGHT, GETBIT(in_buf, MUX4067_P1_UPRIGHT));
+            SETORCLRBIT(buf, LATCH_P1L_CENTER, GETBIT(in_buf, MUX4067_P1_CENTER));
+            SETORCLRBIT(buf, LATCH_P1L_DOWNLEFT, GETBIT(in_buf, MUX4067_P1_DOWNLEFT));
+            SETORCLRBIT(buf, LATCH_P1L_DOWNRIGHT, GETBIT(in_buf, MUX4067_P1_DOWNRIGHT));
+
+            SETORCLRBIT(buf, LATCH_P2L_UPLEFT, GETBIT(in_buf, MUX4067_P2_UPLEFT));
+            SETORCLRBIT(buf, LATCH_P2L_UPRIGHT, GETBIT(in_buf, MUX4067_P2_UPRIGHT));
+            SETORCLRBIT(buf, LATCH_P2L_CENTER, GETBIT(in_buf, MUX4067_P2_CENTER));
+            SETORCLRBIT(buf, LATCH_P2L_DOWNLEFT, GETBIT(in_buf, MUX4067_P2_DOWNLEFT));
+            SETORCLRBIT(buf, LATCH_P2L_DOWNRIGHT, GETBIT(in_buf, MUX4067_P2_DOWNRIGHT));
+        }
 
         SETORCLRBIT(buf, LATCH_P1_S0, lights.p1_mux & 0b1);
         SETORCLRBIT(buf, LATCH_P1_S1, lights.p1_mux & 0b10);
@@ -347,17 +372,31 @@ void lights_task() {
         SETORCLRBIT(buf, LATCH_COIN_COUNTER, lights.coin_pulse);
         SETBIT(buf, LATCH_JAMMA_LED);
     } else {
-        SETORCLRBIT(buf, LATCH_P1L_UPLEFT, lights.p1_ul_light);
-        SETORCLRBIT(buf, LATCH_P1L_UPRIGHT, lights.p1_ur_light);
-        SETORCLRBIT(buf, LATCH_P1L_CENTER, lights.p1_cn_light);
-        SETORCLRBIT(buf, LATCH_P1L_DOWNLEFT, lights.p1_dl_light);
-        SETORCLRBIT(buf, LATCH_P1L_DOWNRIGHT, lights.p1_dr_light);
+        if (swap_pad_lights && input_mode != INPUT_MODE_PIUIO) {
+            SETORCLRBIT(buf, LATCH_P1L_UPLEFT, lights.p2_ul_light);
+            SETORCLRBIT(buf, LATCH_P1L_UPRIGHT, lights.p2_ur_light);
+            SETORCLRBIT(buf, LATCH_P1L_CENTER, lights.p2_cn_light);
+            SETORCLRBIT(buf, LATCH_P1L_DOWNLEFT, lights.p2_dl_light);
+            SETORCLRBIT(buf, LATCH_P1L_DOWNRIGHT, lights.p2_dr_light);
 
-        SETORCLRBIT(buf, LATCH_P2L_UPLEFT, lights.p2_ul_light);
-        SETORCLRBIT(buf, LATCH_P2L_UPRIGHT, lights.p2_ur_light);
-        SETORCLRBIT(buf, LATCH_P2L_CENTER, lights.p2_cn_light);
-        SETORCLRBIT(buf, LATCH_P2L_DOWNLEFT, lights.p2_dl_light);
-        SETORCLRBIT(buf, LATCH_P2L_DOWNRIGHT, lights.p2_dr_light);
+            SETORCLRBIT(buf, LATCH_P2L_UPLEFT, lights.p1_ul_light);
+            SETORCLRBIT(buf, LATCH_P2L_UPRIGHT, lights.p1_ur_light);
+            SETORCLRBIT(buf, LATCH_P2L_CENTER, lights.p1_cn_light);
+            SETORCLRBIT(buf, LATCH_P2L_DOWNLEFT, lights.p1_dl_light);
+            SETORCLRBIT(buf, LATCH_P2L_DOWNRIGHT, lights.p1_dr_light);
+        } else {
+            SETORCLRBIT(buf, LATCH_P1L_UPLEFT, lights.p1_ul_light);
+            SETORCLRBIT(buf, LATCH_P1L_UPRIGHT, lights.p1_ur_light);
+            SETORCLRBIT(buf, LATCH_P1L_CENTER, lights.p1_cn_light);
+            SETORCLRBIT(buf, LATCH_P1L_DOWNLEFT, lights.p1_dl_light);
+            SETORCLRBIT(buf, LATCH_P1L_DOWNRIGHT, lights.p1_dr_light);
+
+            SETORCLRBIT(buf, LATCH_P2L_UPLEFT, lights.p2_ul_light);
+            SETORCLRBIT(buf, LATCH_P2L_UPRIGHT, lights.p2_ur_light);
+            SETORCLRBIT(buf, LATCH_P2L_CENTER, lights.p2_cn_light);
+            SETORCLRBIT(buf, LATCH_P2L_DOWNLEFT, lights.p2_dl_light);
+            SETORCLRBIT(buf, LATCH_P2L_DOWNRIGHT, lights.p2_dr_light);
+        }
 
         SETORCLRBIT(buf, LATCH_P1_S0, lights.p1_mux & 0b1);
         SETORCLRBIT(buf, LATCH_P1_S1, lights.p1_mux & 0b10);
@@ -488,6 +527,7 @@ void hid_task() {
 
 void init() {
     get_input_mode();
+    get_swap_pad_lights();
 
     switch (input_mode) {
         case INPUT_MODE_PIUIO:

@@ -20,6 +20,20 @@ int get_input_mode() {
     return input_mode;
 }
 
+int get_swap_pad_lights() {
+    #if defined(ALWAYS_DEFAULT_INPUT_MODE)
+        swap_pad_lights = 0;
+    #else
+        if (swap_pad_lights < 0)
+            swap_pad_lights = read_swap_pad_lights();
+
+        if (swap_pad_lights > 1)
+            swap_pad_lights = 0;
+    #endif
+
+    return swap_pad_lights;
+}
+
 // thanks to Kevin Boone for the helpful information!
 // https://kevinboone.me/picoflash.html
 
@@ -28,11 +42,15 @@ uint8_t read_input_mode() {
     return *(uint8_t *)(XIP_BASE + INPUT_MODE_OFFSET);
 }
 
-void write_input_mode(uint8_t value) {
+uint8_t read_swap_pad_lights() {
+    return *(uint8_t *)(XIP_BASE + INPUT_MODE_OFFSET + 1);
+}
+
+void write_input_mode(uint8_t input_mode_value, uint8_t swap_pad_lights_value) {
     #ifndef ALWAYS_DEFAULT_INPUT_MODE
     // at minimum we have to write FLASH_PAGE_SIZE bytes (256)
     // this sets the first value in the array and the rest should be 0
-    uint8_t buf[FLASH_PAGE_SIZE] = {value};
+    uint8_t buf[FLASH_PAGE_SIZE] = {input_mode_value, swap_pad_lights_value};
 
     // disabling interrupts is required before writing to flash!
     uint32_t ints = save_and_disable_interrupts();

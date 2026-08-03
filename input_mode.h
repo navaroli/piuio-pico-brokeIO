@@ -12,9 +12,13 @@
 #include "piuio_config.h"
 
 extern int input_mode;
+extern int swap_pad_lights;
 
 int get_input_mode();
 uint8_t read_input_mode();
-void write_input_mode(uint8_t value);
+void write_input_mode(uint8_t input_mode_value, uint8_t swap_pad_lights_value);
+
+int get_swap_pad_lights();
+uint8_t read_swap_pad_lights();
 
 #endif

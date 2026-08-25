@@ -1,6 +1,8 @@
-# piuio-pico (brokeIO edition)
+# piuio-pico (brokeIO edition - ITG Dedicab Support)
 
-This is a Pump it Up IO board (PIUIO) clone based on the RP2040 microcontroller.
+This is a Pump it Up IO board (PIUIO) clone based on the RP2040 microcontroller.  This is compatible with both Pump It Up cabinets and In The Groove dedicabs.
+
+Note: This is a temporary repo - branches here are intended to be merged into https://github.com/sugoku/piuio-pico-brokeIO, and may change based on feedback in those PRs.
 
 This has been adapted for the RP2040 variant of the brokeIO, **B**edrock's **r**eplacement for **o**bsolete **K**orean hardwar**e IO**.
 
